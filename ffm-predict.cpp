@@ -80,7 +80,7 @@ void predict(string test_path, string model_path, string output_path) {
 
         loss -= y==1? log(y_bar) : log(1-y_bar);
 
-        f_out << y_bar << "\n";
+        f_out << y << "," << y_bar << "\n";
     }
 
     loss /= i;
