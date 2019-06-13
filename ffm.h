@@ -40,7 +40,9 @@ void ffm_read_problem_to_disk(string txt_path, string bin_path);
 
 void ffm_save_model(ffm_model &model, string path);
 
-void ffm_save_production_model(ffm_model &model, char const *path, char const *key_prefix);
+void ffm_save_old_style_model(ffm_model &model, string path);
+
+void ffm_save_model_weights(ffm_model &model, string path, string key_prefix);
 
 ffm_model ffm_load_model(string path);
 

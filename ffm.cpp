@@ -658,12 +658,33 @@ void ffm_save_model(ffm_model &model, string path) {
     }
 }
 
-void ffm_save_production_model(ffm_model &model, char const *path, char const *key_prefix) {
+void ffm_save_old_style_model(ffm_model &model, string path) {
+    ofstream f_out(path, ios::out | ios::binary);
+
+    f_out << "n " << model.n << "\n";
+    f_out << "m " << model.m << "\n";
+    f_out << "k " << model.k << "\n";
+    f_out << "normalization " << model.normalization << "\n";
+
+    ffm_float *ptr = model.W;
+    for(ffm_int j = 0; j < model.n; j++)
+    {
+        for(ffm_int f = 0; f < model.m; f++)
+        {
+            f_out << "w" << j << "," << f << " ";
+            for(ffm_int d = 0; d < model.k; d++, ptr++)
+                f_out << *ptr << " ";
+            f_out << "\n";
+        }
+    }
+}
+
+void ffm_save_model_weights(ffm_model &model, string path, string key_prefix) {
     ofstream f_out(path, ios::out | ios::binary);
 
     ffm_float *ptr = model.W;
     for(ffm_int j = 0; j < model.n; j++) {
-        if(strcmp(key_prefix, "") != 0)
+        if(!key_prefix.empty())
             f_out << "{\"key\":\"" << key_prefix << "_" << j << "\",\"value\":{";
         else
             f_out << "{\"key\":\"" << j << "\",\"value\":{";
