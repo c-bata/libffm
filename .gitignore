@@ -1,0 +1,5 @@
+*.o
+ffm-predict
+ffm-train
+build/
+data/
