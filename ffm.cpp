@@ -658,6 +658,35 @@ void ffm_save_model(ffm_model &model, string path) {
     }
 }
 
+void ffm_save_production_model(ffm_model &model, char const *path, char const *key_prefix) {
+    ofstream f_out(path, ios::out | ios::binary);
+
+    ffm_float *ptr = model.W;
+    for(ffm_int j = 0; j < model.n; j++) {
+        if(strcmp(key_prefix, "") != 0)
+            f_out << "{\"key\":\"" << key_prefix << "_" << j << "\",\"value\":{";
+        else
+            f_out << "{\"key\":\"" << j << "\",\"value\":{";
+
+        for(ffm_int f = 0; f < model.m; f++)
+        {
+            f_out << "\"" << f << "\":[";
+            for(ffm_int d = 0; d < model.k; d++, ptr++) {
+                if(d == model.k - 1) {
+                    if(f == model.m - 1) {
+                        f_out << *ptr << "]";
+                    } else {
+                        f_out << *ptr << "],";
+                    }
+                } else {
+                    f_out << *ptr << ",";
+                }
+            }
+        }
+        f_out << "}}\n";
+    }
+}
+
 ffm_model ffm_load_model(string path) {
     ifstream f_in(path, ios::in | ios::binary);
 

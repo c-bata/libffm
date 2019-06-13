@@ -27,6 +27,8 @@ string train_help() {
 "-r <eta>: set learning rate (default 0.2)\n"
 "-s <nr_threads>: set number of threads (default 1)\n"
 "-p <path>: set path to the validation set\n"
+"-f <path>: set path for production model file\n"
+"-m <prefix>: set key prefix for production model\n"
 "--quiet: quiet mode (no output)\n"
 "--no-norm: disable instance-wise normalization\n"
 "--auto-stop: stop at the iteration that achieves the best validation loss (must be used with -p)\n");
@@ -36,6 +38,8 @@ struct Option {
     string tr_path;
     string va_path;
     string model_path;
+    string production_model_path;
+    string key_prefix;
     ffm_parameter param;
     bool quiet = false;
     ffm_int nr_threads = 1;
@@ -103,6 +107,16 @@ Option parse_option(int argc, char **argv) {
                 throw invalid_argument("need to specify path after -p");
             i++;
             opt.va_path = args[i];
+        } else if(args[i].compare("-m") == 0) {
+            if(i == argc-1)
+                throw invalid_argument("need to specify model key prefix after -m");
+            i++;
+            opt.key_prefix = args[i];
+        } else if(args[i].compare("-f") == 0) {
+            if(i == argc-1)
+                throw invalid_argument("need to specify production model file path after -f");
+            i++;
+            opt.production_model_path = args[i];
         } else if(args[i].compare("--no-norm") == 0) {
             opt.param.normalization = false;
         } else if(args[i].compare("--quiet") == 0) {
@@ -142,6 +156,9 @@ int train_on_disk(Option opt) {
     ffm_model model = ffm_train_on_disk(tr_bin_path.c_str(), va_bin_path.c_str(), opt.param);
 
     ffm_save_model(model, opt.model_path);
+
+    if(opt.production_model_path.c_str() != NULL)
+        ffm_save_production_model(model, opt.production_model_path.c_str(), opt.key_prefix.c_str());
 
     return 0;
 }
