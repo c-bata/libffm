@@ -1,12 +1,12 @@
 #include <stdint.h>
+
 #include "gtest/gtest.h"
 
-extern "C"
-{
 #include "ffm.h"
-}
 
-class FFMTest : public ::testing::Test
+using namespace ffm;
+
+class FFMWeightReaderTest : public ::testing::Test
 {
 protected:
     virtual void SetUp()
@@ -17,7 +17,11 @@ protected:
     }
 };
 
-TEST_F(FFMTest, Foo)
+TEST_F(FFMWeightReaderTest, Read)
 {
-ASSERT_EQ(0, 0);
+    ffm::ffm_load_model("./foo.txt");
+    ffm::WeightReader wfr("foo.txt");
+    ffm::ffm_float actual = wfr.read(1);
+    ASSERT_EQ(actual, 1.0);
+    wfr.close();
 }

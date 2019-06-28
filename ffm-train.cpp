@@ -29,6 +29,7 @@ string train_help() {
 "-p <path>: set path to the validation set\n"
 "-f <path>: set path for production model file\n"
 "-m <prefix>: set key prefix for production model\n"
+"-W <path>: set path for importance weights file\n"
 "--quiet: quiet mode (no output)\n"
 "--old-style-model: generate old style model file\n"
 "--no-norm: disable instance-wise normalization\n"
@@ -40,6 +41,7 @@ struct Option {
     string va_path;
     string model_path;
     string model_weights_path;
+    string importance_weights_path;
     string key_prefix;
     ffm_parameter param;
     bool old_style_model = false;
@@ -119,6 +121,11 @@ Option parse_option(int argc, char **argv) {
                 throw invalid_argument("need to specify production model file path after -f");
             i++;
             opt.model_weights_path = args[i];
+        } else if(args[i].compare("-W") == 0) {
+            if(i == argc-1)
+                throw invalid_argument("need to specify weights file path after -W");
+            i++;
+            opt.importance_weights_path = args[i];
         } else if(args[i].compare("--no-norm") == 0) {
             opt.param.normalization = false;
         } else if(args[i].compare("--quiet") == 0) {
@@ -157,7 +164,11 @@ int train_on_disk(Option opt) {
     if(!opt.va_path.empty())
         ffm_read_problem_to_disk(opt.va_path, va_bin_path);
 
-    ffm_model model = ffm_train_on_disk(tr_bin_path.c_str(), va_bin_path.c_str(), opt.param);
+    ffm_model model = ffm_train_on_disk(
+            tr_bin_path.c_str(),
+            va_bin_path.c_str(),
+            opt.importance_weights_path,
+            opt.param);
 
     if (!opt.old_style_model)
         ffm_save_model(model, opt.model_path);

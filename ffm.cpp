@@ -26,6 +26,7 @@ v: Value of each element in the problem
 #include <fstream>
 #include <new>
 #include <memory>
+#include <optional>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -70,6 +71,22 @@ ffm_long get_w_size(ffm_model &model) {
     return (ffm_long) model.n * model.m * k_aligned * 2;
 }
 
+}  // unnamed namespace
+
+WeightReader::WeightReader(std::string path) {
+    f.open(path, ios::in);
+}
+
+ffm_float WeightReader::read(ffm_int index) {
+    // TODO(c-bata): read from file.
+    // TODO(c-bata): need to access O(1) after converting flatbuffer.
+    return 1.0;
+}
+
+void WeightReader::close() {
+    f.close();
+}
+
 #if defined USESSE
 inline ffm_float wTx(
     ffm_node *begin,
@@ -79,6 +96,7 @@ inline ffm_float wTx(
     ffm_float kappa=0, 
     ffm_float eta=0, 
     ffm_float lambda=0, 
+    ffm_float iw=1.0,
     bool do_update=false) {
 
     ffm_int align0 = 2 * get_k_aligned(model.k);
@@ -186,7 +204,8 @@ inline ffm_float wTx(
     ffm_float kappa=0, 
     ffm_float eta=0, 
     ffm_float lambda=0, 
-    bool do_update=false) {
+    bool do_update=false,
+    ffm_float iw=1.0) {
 
     ffm_int align0 = 2 * get_k_aligned(model.k);
     ffm_int align1 = model.m * align0;
@@ -222,8 +241,8 @@ inline ffm_float wTx(
                     wg1[d] += g1 * g1;
                     wg2[d] += g2 * g2;
 
-                    w1[d] -= eta / sqrt(wg1[d]) * g1;
-                    w2[d] -= eta / sqrt(wg2[d]) * g2;
+                    w1[d] -= eta / sqrt(wg1[d]) * g1 * iw;
+                    w2[d] -= eta / sqrt(wg2[d]) * g2 * iw;
                 }
             } else {
                 for(ffm_int d = 0; d < align0; d += kALIGN * 2)
@@ -308,18 +327,26 @@ struct disk_problem_meta {
 struct problem_on_disk {
     disk_problem_meta meta;
     vector<ffm_float> Y;
+    vector<ffm_float> IW;
     vector<ffm_float> R;
     vector<ffm_long> P;
     vector<ffm_node> X;
     vector<ffm_long> B;
 
-    problem_on_disk(string path) {
+    problem_on_disk(string path, string iw_path="") {
         f.open(path, ios::in | ios::binary);
         if(f.good()) {
             f.read(reinterpret_cast<char*>(&meta), sizeof(disk_problem_meta));
             f.seekg(meta.B_pos);
             B.resize(meta.num_blocks);
             f.read(reinterpret_cast<char*>(B.data()), sizeof(ffm_long) * meta.num_blocks);
+        }
+
+        if (!iw_path.empty()) {
+            WeightReader wfr = WeightReader(iw_path);
+            wr = &wfr;
+        } else {
+            wr = nullptr;
         }
     }
 
@@ -334,6 +361,10 @@ struct problem_on_disk {
 
         Y.resize(l);
         f.read(reinterpret_cast<char*>(Y.data()), sizeof(ffm_float) * l);
+
+        if (wr != nullptr) {
+            *IW.data() = wr->read(1);
+        }
 
         R.resize(l);
         f.read(reinterpret_cast<char*>(R.data()), sizeof(ffm_float) * l);
@@ -353,6 +384,7 @@ struct problem_on_disk {
 
 private:
     ifstream f;
+    WeightReader *wr;
 };
 
 uint64_t hashfile(string txt_path, bool one_block=false)
@@ -392,7 +424,6 @@ uint64_t hashfile(string txt_path, bool one_block=false)
 }
 
 void txt2bin(string txt_path, string bin_path) {
-    
     FILE *f_txt = fopen(txt_path.c_str(), "r");
     if(f_txt == nullptr)
         throw;
@@ -495,8 +526,6 @@ bool check_same_txt_bin(string txt_path, string bin_path) {
     return true;
 }
 
-} // unnamed namespace
-
 ffm_model::~ffm_model() {
     if(W != nullptr) {
 #ifndef USESSE
@@ -529,9 +558,9 @@ void ffm_read_problem_to_disk(string txt_path, string bin_path) {
     }
 }
 
-ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param) {
+ffm_model ffm_train_on_disk(string tr_path, string va_path, string iw_path, ffm_parameter param) {
 
-    problem_on_disk tr(tr_path);
+    problem_on_disk tr(std::move(tr_path), std::move(iw_path));
     problem_on_disk va(va_path);
 
     ffm_model model = init_model(tr.meta.n, tr.meta.m, param);
@@ -580,7 +609,9 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
                 ffm_int i = inner_order[ii];
 
                 ffm_float y = prob.Y[i];
-                
+
+                ffm_float iw = prob.IW[i];
+
                 ffm_node *begin = &prob.X[prob.P[i]];
 
                 ffm_node *end = &prob.X[prob.P[i+1]];
@@ -597,7 +628,7 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
                    
                     ffm_float kappa = -y*expnyt/(1+expnyt);
 
-                    wTx(begin, end, r, model, kappa, param.eta, param.lambda, true);
+                    wTx(begin, end, r, model, kappa, param.eta, param.lambda, true, iw);
                 }
             }
         }
