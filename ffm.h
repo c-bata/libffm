@@ -1,8 +1,8 @@
 #ifndef _LIBFFM_H
 #define _LIBFFM_H
 
-#include <string>
 #include <fstream>
+#include <string>
 
 namespace ffm {
 
@@ -14,39 +14,40 @@ typedef int ffm_int;
 typedef long long ffm_long;
 
 struct ffm_node {
-    ffm_int f; // field index
-    ffm_int j; // feature index
-    ffm_float v; // value
+  ffm_int f;   // field index
+  ffm_int j;   // feature index
+  ffm_float v; // value
 };
 
 struct ffm_model {
-    ffm_int n; // number of features
-    ffm_int m; // number of fields
-    ffm_int k; // number of latent factors
-    ffm_float *W = nullptr;
-    bool normalization;
-    ~ffm_model();
+  ffm_int n; // number of features
+  ffm_int m; // number of fields
+  ffm_int k; // number of latent factors
+  ffm_float *W = nullptr;
+  bool normalization;
+  ~ffm_model();
 };
 
 struct ffm_parameter {
-    ffm_float eta = 0.2; // learning rate
-    ffm_float lambda = 0.00002; // regularization parameter
-    ffm_int nr_iters = 15;
-    ffm_int k = 4; // number of latent factors
-    bool normalization = true;
-    bool auto_stop = false;
+  ffm_float eta = 0.2;        // learning rate
+  ffm_float lambda = 0.00002; // regularization parameter
+  ffm_int nr_iters = 15;
+  ffm_int k = 4; // number of latent factors
+  bool normalization = true;
+  bool auto_stop = false;
 };
 
 class WeightReader {
 public:
-    WeightReader();
-    explicit WeightReader(string path);
-    ~WeightReader();
+  WeightReader();
+  explicit WeightReader(string path);
+  ~WeightReader();
 
-    ffm_float read(ffm_int index);
+  ffm_float read(ffm_int index);
+
 private:
-    ifstream f;
-    vector<ffm_float> cache;
+  ifstream f;
+  vector<ffm_float> cache;
 };
 
 void ffm_read_problem_to_disk(string txt_path, string bin_path);
@@ -59,7 +60,8 @@ void ffm_save_model_weights(ffm_model &model, string path, string key_prefix);
 
 ffm_model ffm_load_model(string path);
 
-ffm_model ffm_train_on_disk(string Tr_path, string Va_path, string iw_path, ffm_parameter param);
+ffm_model ffm_train_on_disk(string Tr_path, string Va_path, string iw_path,
+                            ffm_parameter param);
 
 ffm_float ffm_predict(ffm_node *begin, ffm_node *end, ffm_model &model);
 

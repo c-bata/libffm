@@ -6,21 +6,15 @@
 
 using namespace ffm;
 
-class FFMWeightReaderTest : public ::testing::Test
-{
+class FFMWeightReaderTest : public ::testing::Test {
 protected:
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-    }
+  virtual void SetUp() {}
+  virtual void TearDown() {}
 };
 
-TEST_F(FFMWeightReaderTest, Read)
-{
-    // TODO(c-bata): Avoid using magic relative path.
-    ffm::WeightReader wfr("../../tests/weights_file1.txt");
-    ffm::ffm_float actual = wfr.read(1);
-    ASSERT_EQ(actual, 1.5);
+TEST_F(FFMWeightReaderTest, Read) {
+  // TODO(c-bata): Avoid using magic relative path.
+  ffm::WeightReader wfr("../../tests/weights_file1.txt");
+  ffm::ffm_float actual = wfr.read(1);
+  ASSERT_EQ(actual, 1.5);
 }
