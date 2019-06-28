@@ -30,6 +30,7 @@ v: Value of each element in the problem
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <stdio.h>
 #include <cstring>
 #include <vector>
 #include <cassert>
@@ -75,12 +76,24 @@ ffm_long get_w_size(ffm_model &model) {
 
 WeightReader::WeightReader(std::string path) {
     f.open(path, ios::in);
+
+    string line;
+    ffm_float iw;
+    while (getline(f, line)) {
+        int result = sscanf(line.c_str(), "%f", &iw);
+        if (result == EOF) {
+            break;
+        }
+        cache.push_back(iw);
+    }
 }
 
 ffm_float WeightReader::read(ffm_int index) {
-    // TODO(c-bata): read from file.
     // TODO(c-bata): need to access O(1) after converting flatbuffer.
-    return 1.0;
+    if (index > (int) cache.size()) {
+        return static_cast<ffm_float>(-1.0);
+    }
+    return cache[index];
 }
 
 void WeightReader::close() {
@@ -203,9 +216,9 @@ inline ffm_float wTx(
     ffm_model &model, 
     ffm_float kappa=0, 
     ffm_float eta=0, 
-    ffm_float lambda=0, 
-    bool do_update=false,
-    ffm_float iw=1.0) {
+    ffm_float lambda=0,
+    ffm_float iw=1.0,
+    bool do_update=false) {
 
     ffm_int align0 = 2 * get_k_aligned(model.k);
     ffm_int align1 = model.m * align0;
