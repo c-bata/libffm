@@ -19,9 +19,8 @@ protected:
 
 TEST_F(FFMWeightReaderTest, Read)
 {
-    ffm::ffm_load_model("./foo.txt");
-    ffm::WeightReader wfr("foo.txt");
+    // TODO(c-bata): Avoid using magic relative path.
+    ffm::WeightReader wfr("../../tests/weights_file1.txt");
     ffm::ffm_float actual = wfr.read(1);
-    ASSERT_EQ(actual, 1.0);
-    wfr.close();
+    ASSERT_EQ(actual, 1.5);
 }

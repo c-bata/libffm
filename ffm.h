@@ -39,10 +39,11 @@ struct ffm_parameter {
 
 class WeightReader {
 public:
+    WeightReader();
     explicit WeightReader(string path);
+    ~WeightReader();
 
     ffm_float read(ffm_int index);
-    void close();
 private:
     ifstream f;
     vector<ffm_float> cache;

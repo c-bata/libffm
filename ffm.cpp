@@ -88,16 +88,16 @@ WeightReader::WeightReader(std::string path) {
     }
 }
 
+WeightReader::~WeightReader(){
+    f.close();
+}
+
 ffm_float WeightReader::read(ffm_int index) {
     // TODO(c-bata): need to access O(1) after converting flatbuffer.
     if (index > (int) cache.size()) {
         return static_cast<ffm_float>(-1.0);
     }
     return cache[index];
-}
-
-void WeightReader::close() {
-    f.close();
 }
 
 #if defined USESSE
@@ -356,7 +356,7 @@ struct problem_on_disk {
         }
 
         if (!iw_path.empty()) {
-            WeightReader wfr = WeightReader(iw_path);
+            WeightReader wfr (iw_path);
             wr = &wfr;
         } else {
             wr = nullptr;
